@@ -1,0 +1,35 @@
+#Place inside .circleci directory
+version 2.1
+
+jobs:
+	build-assets:
+		docker:
+		  - image: cimg/node:18.11.0
+      
+    steps:
+      - checkout
+      
+      - run:
+          name: "What Branch Am I On?"
+          command: |
+            echo $CIRCLE_BRANCH
+            
+       - restore-cache:
+           keys:
+            - "deps-v1--{{ checksum my-medusa-starter/package-lock.json}}
+            - deps-v1--
+            
+       - run:
+          name: "Build Storefront Deps"
+          command: |
+            cd my-medusa-starter &&
+            npm i
+            
+        - save-cache:
+            paths: my-medusa-starter/node-modules
+            key: deps-v1--{{ checksum my-medusa-starter/package-lock.json}}
+workflows:
+  build-storefront:
+    jobs:
+      - build-assets
+  

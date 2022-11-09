@@ -1,33 +1,46 @@
 #Place inside .circleci directory
-version 2.1
 
+version 2.1
+orbs:
+  gcp-cli: circleci/gcp-cli@2.1.0
+  kubernetes: circleci/kubernetes@0.11.2
+  slack: circleci/slack@4.4.0
+  aws-ecr: circleci/aes-ecr@8.1.3
+  
 jobs:
-	build-assets:
-		docker:
-		  - image: cimg/node:18.11.0
+  build-assets:
+    docker:
+      - image: cimg/node:18.11.0
       
-    steps:
-      - checkout
+steps:
+  - checkout
       
-      - run:
-          name: "What Branch Am I On?"
-          command: |
-            echo $CIRCLE_BRANCH
+  - run:
+      name: "What Branch Am I On?"
+      command: |
+        echo $CIRCLE_BRANCH
             
-       - restore-cache:
-           keys:
-            - "deps-v1--{{ checksum my-medusa-starter/package-lock.json}}
-            - deps-v1--
+   - restore-cache:
+      keys:
+        - "deps-v1--{{ checksum my-medusa-starter/package-lock.json}}
+        - deps-v1--
+	
+   - aws-ecr/build-and-push-image
+     - checkout
+     - path: "path/to/image"
+     - tag: version_number
+   - composer_build
             
-       - run:
-          name: "Build Storefront Deps"
-          command: |
-            cd my-medusa-starter &&
-            npm i
+   - run:
+       name: "Build Storefront Deps"
+       command: |
+         cd my-medusa-starter &&
+         npm i
             
-        - save-cache:
-            paths: my-medusa-starter/node-modules
-            key: deps-v1--{{ checksum my-medusa-starter/package-lock.json}}
+    - save-cache:
+        paths: my-medusa-starter/node-modules
+        key: deps-v1--{{ checksum my-medusa-starter/package-lock.json}}
+
 workflows:
   build-storefront:
     jobs:
